@@ -113,16 +113,16 @@
   
   <!-- Zoznam TV staníc -->
   <div class="channels-grid">
-    <div class="channel-card" tabindex="0" onclick="playStream('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">
+    <div class="channel-card nav-item" tabindex="0" onclick="playStream('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">
       <h3>STVR 1</h3>
     </div>
-    <div class="channel-card" tabindex="0" onclick="playStream('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">
+    <div class="channel-card nav-item" tabindex="0" onclick="playStream('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">
       <h3>STVR 2</h3>
     </div>
-    <div class="channel-card" tabindex="0" onclick="playStream('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">
+    <div class="channel-card nav-item" tabindex="0" onclick="playStream('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">
       <h3>STVR Šport</h3>
     </div>
-    <div class="channel-card" tabindex="0" onclick="playStream('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">
+    <div class="channel-card nav-item" tabindex="0" onclick="playStream('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">
       <h3>TA3</h3>
     </div>
   </div>
@@ -146,53 +146,11 @@
         video.play();
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Pre prehliadače s natívnou podporou HLS (napr. Safari)
       video.src = url;
       video.play();
     }
   }
 
-  // Správa navigácie pomocou šípok (D-pad)
-  document.addEventListener('keydown', function(e) {
-    const focusable = Array.from(document.querySelectorAll('.channel-card'));
-    const index = focusable.indexOf(document.activeElement);
-
-    if (index === -1) {
-      // Ak nie je označené nič, prvá šípka označí prvú stanicu
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        focusable[0].focus();
-        e.preventDefault();
-      }
-      return;
-    }
-
-    let nextIndex = index;
-
-    switch (e.key) {
-      case 'ArrowLeft':
-        if (index % 2 !== 0) nextIndex = index - 1; // Posun vľavo v 2-stĺpcovej mriežke
-        break;
-      case 'ArrowRight':
-        if (index % 2 === 0 && index + 1 < focusable.length) nextIndex = index + 1; // Posun vpravo
-        break;
-      case 'ArrowUp':
-        if (index - 2 >= 0) nextIndex = index - 2; // Posun o riadok nahor
-        break;
-      case 'ArrowDown':
-        if (index + 2 < focusable.length) nextIndex = index + 2; // Posun o riadok nadol
-        break;
-      case 'Enter':
-        document.activeElement.click(); // Potvrdenie výberu
-        break;
-    }
-
-    if (nextIndex !== index) {
-      e.preventDefault(); // Zaznamenanie šípky neposunie celú stránku
-      focusable[nextIndex].focus();
-    }
-  });
-  
-  // Funkcie prehrávača
   function togglePlay() {
     if (video.paused) {
       video.play();
@@ -209,28 +167,34 @@
     }
   }
 
-  // Pokročilá navigácia pre TV
+  // Jediný a kompletný skript pre TV navigáciu
   document.addEventListener('keydown', function(e) {
     const focusable = Array.from(document.querySelectorAll('.nav-item'));
     const current = document.activeElement;
-    const index = focusable.indexOf(current);
+    let index = focusable.indexOf(current);
 
+    // Ak nič nemá fokus, prvé stlačenie šípky nastaví fokus na 1. stanicu (index 2)
     if (index === -1) {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        focusable[2].focus(); // Označí prvú stanicu v zozname
+        focusable[2].focus();
         e.preventDefault();
       }
       return;
     }
 
-    // Určenie zóny (0 a 1 sú tlačidlá prehrávača, 2+ sú stanice)
+    // Index 0: Play/Pause, Index 1: Celá obrazovka, Index 2+: Stanice
     const inPlayer = index < 2;
+    const stationIndex = index - 2; // Index v rámci staníc (0, 1, 2, 3...)
 
     switch (e.key) {
       case 'ArrowLeft':
         if (!inPlayer) {
-          // Prechod zo zoznamu staníc na ovládanie prehrávača
-          focusable[0].focus();
+          // Ak sme na ľavej stanici v mriežke (parný index stanice), prejdeme na player
+          if (stationIndex % 2 === 0) {
+            focusable[0].focus();
+          } else {
+            focusable[index - 1].focus();
+          }
         } else if (index === 1) {
           focusable[0].focus();
         }
@@ -242,17 +206,16 @@
           if (index === 0) {
             focusable[1].focus();
           } else {
-            // Prechod z prehrávača na zoznam staníc
-            focusable[2].focus();
+            focusable[2].focus(); // Prechod na prú stanicu
           }
-        } else if (index % 2 === 0 && index + 1 < focusable.length) {
+        } else if (stationIndex % 2 === 0 && index + 1 < focusable.length) {
           focusable[index + 1].focus();
         }
         e.preventDefault();
         break;
 
       case 'ArrowUp':
-        if (!inPlayer && index - 2 >= 2) {
+        if (!inPlayer && stationIndex - 2 >= 0) {
           focusable[index - 2].focus();
         }
         e.preventDefault();
@@ -260,7 +223,8 @@
 
       case 'ArrowDown':
         if (inPlayer) {
-          // Nie je potrebné
+          // Z prehrávača sa šípkou dole dá tiež preskočiť na prú stanicu
+          focusable[2].focus();
         } else if (index + 2 < focusable.length) {
           focusable[index + 2].focus();
         }
