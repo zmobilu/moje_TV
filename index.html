@@ -73,14 +73,44 @@
     margin: 10px 0 0 0;
     font-size: 1.1rem;
   }
+  /* Pridané štýly pre ovládacie tlačidlá prehrávača */
+  .player-controls {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: #111;
+    justify-content: center;
+  }
+
+  .btn-tv {
+    background: #252a36;
+    color: #fff;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    outline: none;
+    font-size: 0.9rem;
+  }
+
+  /* Focus štýl pre tlačidlá v prehrávači */
+  .btn-tv:focus, .btn-tv:hover {
+    border-color: #0088ff;
+    background: #0088ff;
+  }
 </style>
 
 <div class="container">
-  <!-- Hlavný prehrávač -->
+  <!-- Hlavný prehrávač s vlastnými tlačidlami -->
   <div class="player-container">
-    <video id="videoPlayer" controls autoplay></video>
+    <video id="videoPlayer" autoplay></video>
+    
+    <div class="player-controls">
+      <button class="btn-tv nav-item" tabindex="0" onclick="togglePlay()">Play / Pause</button>
+      <button class="btn-tv nav-item" tabindex="0" onclick="toggleFullscreen()">Celá obrazovka</button>
+    </div>
   </div>
-
+  
   <!-- Zoznam TV staníc -->
   <div class="channels-grid">
     <div class="channel-card" tabindex="0" onclick="playStream('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">
@@ -159,6 +189,87 @@
     if (nextIndex !== index) {
       e.preventDefault(); // Zaznamenanie šípky neposunie celú stránku
       focusable[nextIndex].focus();
+    }
+  });
+  
+  // Funkcie prehrávača
+  function togglePlay() {
+    if (video.paused) {
+      video.play();
+    } else {
+      video.pause();
+    }
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      video.requestFullscreen().catch(err => alert(err.message));
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  // Pokročilá navigácia pre TV
+  document.addEventListener('keydown', function(e) {
+    const focusable = Array.from(document.querySelectorAll('.nav-item'));
+    const current = document.activeElement;
+    const index = focusable.indexOf(current);
+
+    if (index === -1) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        focusable[2].focus(); // Označí prvú stanicu v zozname
+        e.preventDefault();
+      }
+      return;
+    }
+
+    // Určenie zóny (0 a 1 sú tlačidlá prehrávača, 2+ sú stanice)
+    const inPlayer = index < 2;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        if (!inPlayer) {
+          // Prechod zo zoznamu staníc na ovládanie prehrávača
+          focusable[0].focus();
+        } else if (index === 1) {
+          focusable[0].focus();
+        }
+        e.preventDefault();
+        break;
+
+      case 'ArrowRight':
+        if (inPlayer) {
+          if (index === 0) {
+            focusable[1].focus();
+          } else {
+            // Prechod z prehrávača na zoznam staníc
+            focusable[2].focus();
+          }
+        } else if (index % 2 === 0 && index + 1 < focusable.length) {
+          focusable[index + 1].focus();
+        }
+        e.preventDefault();
+        break;
+
+      case 'ArrowUp':
+        if (!inPlayer && index - 2 >= 2) {
+          focusable[index - 2].focus();
+        }
+        e.preventDefault();
+        break;
+
+      case 'ArrowDown':
+        if (inPlayer) {
+          // Nie je potrebné
+        } else if (index + 2 < focusable.length) {
+          focusable[index + 2].focus();
+        }
+        e.preventDefault();
+        break;
+
+      case 'Enter':
+        current.click();
+        break;
     }
   });
 </script>
