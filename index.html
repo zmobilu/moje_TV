@@ -152,39 +152,39 @@
   }
 
   function togglePlay() {
-  if (video.paused || video.ended) {
-    video.play().catch(err => console.log("Play error:", err));
-  } else {
-    video.pause();
-  }
-}
-
-function toggleFullscreen() {
-  const container = document.querySelector('.player-container');
-  
-  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-    if (container.requestFullscreen) {
-      container.requestFullscreen().catch(err => console.log(err));
-    } else if (container.webkitRequestFullscreen) { /* Pre Safari / staršie TV WebView */
-      container.webkitRequestFullscreen();
-    } else if (video.webkitEnterFullscreen) { /* Pre iOS / WebView TV */
-      video.webkitEnterFullscreen();
-    }
-  } else {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
+    if (video.paused || video.ended) {
+      video.play().catch(err => console.log("Play error:", err));
+    } else {
+      video.pause();
     }
   }
 
-  // Jediný a kompletný skript pre TV navigáciu
+  function toggleFullscreen() {
+    const container = document.querySelector('.player-container');
+    
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (container.requestFullscreen) {
+        container.requestFullscreen().catch(err => console.log(err));
+      } else if (container.webkitRequestFullscreen) {
+        container.webkitRequestFullscreen();
+      } else if (video.webkitEnterFullscreen) {
+        video.webkitEnterFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
+  } // <-- Tu chýbala uzatváracia zátvorka pre toggleFullscreen()
+
+  // Samostatný skript pre TV navigáciu
   document.addEventListener('keydown', function(e) {
     const focusable = Array.from(document.querySelectorAll('.nav-item'));
     const current = document.activeElement;
     let index = focusable.indexOf(current);
 
-    // Ak nič nemá fokus, prvé stlačenie šípky nastaví fokus na 1. stanicu (index 2)
     if (index === -1) {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         focusable[2].focus();
@@ -193,14 +193,12 @@ function toggleFullscreen() {
       return;
     }
 
-    // Index 0: Play/Pause, Index 1: Celá obrazovka, Index 2+: Stanice
     const inPlayer = index < 2;
-    const stationIndex = index - 2; // Index v rámci staníc (0, 1, 2, 3...)
+    const stationIndex = index - 2;
 
     switch (e.key) {
       case 'ArrowLeft':
         if (!inPlayer) {
-          // Ak sme na ľavej stanici v mriežke (parný index stanice), prejdeme na player
           if (stationIndex % 2 === 0) {
             focusable[0].focus();
           } else {
@@ -217,7 +215,7 @@ function toggleFullscreen() {
           if (index === 0) {
             focusable[1].focus();
           } else {
-            focusable[2].focus(); // Prechod na prú stanicu
+            focusable[2].focus();
           }
         } else if (stationIndex % 2 === 0 && index + 1 < focusable.length) {
           focusable[index + 1].focus();
@@ -234,7 +232,6 @@ function toggleFullscreen() {
 
       case 'ArrowDown':
         if (inPlayer) {
-          // Z prehrávača sa šípkou dole dá tiež preskočiť na prú stanicu
           focusable[2].focus();
         } else if (index + 2 < focusable.length) {
           focusable[index + 2].focus();
