@@ -152,18 +152,29 @@
   }
 
   function togglePlay() {
-    if (video.paused) {
-      video.play();
-    } else {
-      video.pause();
-    }
+  if (video.paused || video.ended) {
+    video.play().catch(err => console.log("Play error:", err));
+  } else {
+    video.pause();
   }
+}
 
-  function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-      video.requestFullscreen().catch(err => alert(err.message));
-    } else {
+function toggleFullscreen() {
+  const container = document.querySelector('.player-container');
+  
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    if (container.requestFullscreen) {
+      container.requestFullscreen().catch(err => console.log(err));
+    } else if (container.webkitRequestFullscreen) { /* Pre Safari / staršie TV WebView */
+      container.webkitRequestFullscreen();
+    } else if (video.webkitEnterFullscreen) { /* Pre iOS / WebView TV */
+      video.webkitEnterFullscreen();
+    }
+  } else {
+    if (document.exitFullscreen) {
       document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
     }
   }
 
