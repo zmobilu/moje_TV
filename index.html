@@ -121,6 +121,47 @@
       video.play();
     }
   }
+
+  // Správa navigácie pomocou šípok (D-pad)
+  document.addEventListener('keydown', function(e) {
+    const focusable = Array.from(document.querySelectorAll('.channel-card'));
+    const index = focusable.indexOf(document.activeElement);
+
+    if (index === -1) {
+      // Ak nie je označené nič, prvá šípka označí prvú stanicu
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        focusable[0].focus();
+        e.preventDefault();
+      }
+      return;
+    }
+
+    let nextIndex = index;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        if (index % 2 !== 0) nextIndex = index - 1; // Posun vľavo v 2-stĺpcovej mriežke
+        break;
+      case 'ArrowRight':
+        if (index % 2 === 0 && index + 1 < focusable.length) nextIndex = index + 1; // Posun vpravo
+        break;
+      case 'ArrowUp':
+        if (index - 2 >= 0) nextIndex = index - 2; // Posun o riadok nahor
+        break;
+      case 'ArrowDown':
+        if (index + 2 < focusable.length) nextIndex = index + 2; // Posun o riadok nadol
+        break;
+      case 'Enter':
+        document.activeElement.click(); // Potvrdenie výberu
+        break;
+    }
+
+    if (nextIndex !== index) {
+      e.preventDefault(); // Zaznamenanie šípky neposunie celú stránku
+      focusable[nextIndex].focus();
+    }
+  });
 </script>
+  
 </body>
 </html>
