@@ -152,10 +152,20 @@
   }
 
   function togglePlay() {
+    if (!video) return;
+  
     if (video.paused || video.ended) {
-      video.play().catch(err => console.log("Play error:", err));
+      var playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.then(function() {
+          console.log("Prehrávanie spustené");
+        }).catch(function(error) {
+          console.log("Chyba pri spustení:", error);
+        });
+      }
     } else {
       video.pause();
+      console.log("Prehrávanie pozastavené");
     }
   }
 
